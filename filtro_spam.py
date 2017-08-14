@@ -42,7 +42,7 @@ def load_enron_folder(path):
       #print(ham_i_path)
       ham_i_file = open(ham_i_path, 'rb')
       ham_i_str = ham_i_file.read()
-      ham_i_text = ham_i_str.decode('utf-8',errors='ignore')     # Convert to Unicode
+      ham_i_text = ham_i_str.decode('utf-8', errors='ignore')     # Convert to Unicode
       ham_mail.append(ham_i_text)    # Append to the mail structure
       ham_i_file.close()
    random.shuffle(ham_mail)  # Random order
@@ -77,7 +77,7 @@ def load_enron_folder(path):
       #print(spam_i_path)
       spam_i_file = open(spam_i_path, 'rb')
       spam_i_str = spam_i_file.read()
-      spam_i_text = spam_i_str.decode('utf-8',errors='ignore')     # Convert to Unicode
+      spam_i_text = spam_i_str.decode('utf-8', errors='ignore')     # Convert to Unicode
       spam_mail.append(spam_i_text)    # Append to the mail structure
       spam_i_file.close()
    random.shuffle(spam_mail)  # Random order
@@ -141,23 +141,20 @@ def kfold_cross_validation(learner, k, examples, n, data, labels):
     best_validation_error = 0
     training_error = 0
     validation_error = 0
-    for size in range(0, n): # Para los distintos valores de los hiperparámetros
+
+
+    for size in range(1, n  + 1): # Para los distintos valores de los hiperparámetros
         # Kfold.split() devuelve unos indices de  entrenamiento y test
         for train_index, test_index in KFold(k).split(data):
 
             # Se organizan los datos segun los indices
 
-            print(train_index)
-            # Para entrenamiento
-            data_training = data[train_index]
-            print(data)
-            print(train_index)
-            print(labels)
-            labels_training = labels[train_index]
+            data_training = data[train_index[0]:train_index[-1]]
+            labels_training = labels[train_index[0]:train_index[-1]]
 
             # Para test
-            data_test = data[test_index]
-            labels_test = labels[test_index]
+            data_test = data[test_index[0]:test_index[-1]]
+            labels_test = labels[test_index[0]:test_index[-1]]
 
             # Se prepara la distribucion que se haya especificado
 
@@ -176,7 +173,6 @@ def kfold_cross_validation(learner, k, examples, n, data, labels):
             # Se realiza una clasificacion para los datos de test
             prediction = dist.predict(data_test) # Devuelve una serie de
             # etiquetas predecidas para los datos de test
-            print("PREDICCION: "+prediction)
 
 
             # Se calcula la precision con la funcion score
@@ -228,16 +224,18 @@ training_labels = data1['training_labels']+data2['training_labels'] + \
 validation_mails = data1['validation_mails']+data2['validation_mails'] + \
                    data3['validation_mails']+data4['validation_mails'] + \
                    data5['validation_mails']
-validation_labels = data1['validation_labels']+data2['validation_mails'] + \
-                    data3['validation_mails']+data4['validation_mails'] + \
-                    data5['validation_mails']
+validation_labels = data1['validation_labels']+data2['validation_labels'] + \
+                    data3['validation_labels']+data4['validation_labels'] + \
+                    data5['validation_labels']
 
-unigram_bag = bag_words(training_mails, True)
-bigram_bag = bag_words(training_mails, False)
+unigram_bag = bag_words(training_mails + validation_mails, True)
+bigram_bag = bag_words(training_mails + validation_mails, False)
 
 
+# Se entrena el clasificador
+kfold_cross_validation("Multinomial", 5, "pedo", 1, unigram_bag, training_labels
+                     + validation_labels)
 
-kfold_cross_validation("Multinomial", 5, "pedo", 1, unigram_bag, training_labels)
 
 # Loading test data
 data6 = load_enron_folder(folder_enron6)
