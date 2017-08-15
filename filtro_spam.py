@@ -116,35 +116,22 @@ def load_enron_folder(path):
    return data
 
 """
-    Inicializa y construye el modelo de bolsa de palabras.
-        data: Conjunto de datos.
-        type: True para unigrama, False para bigrama.      
-"""
-def bag_words(data, type):
-    if type:
-        return CountVectorizer(ngram_range=(1, 1)).fit_transform(data)
-    else:
-        return CountVectorizer(ngram_range=(1, 2)).fit_transform(data)
-
-"""
     Realiza el entrenamiento del clasificador mediante el algoritmo de
     validación cruzada.
-        learner: La distribucion que se quiere usar
+        learner: La distribucion que se quiere usar: Multinomial o Bernoulli
         k: Numero de folds para el entrenamiento del clasificador
-        examples: nuse nuse
         n: Numero de hiperparametros de la distribucion
-        data: Datos de para entrenar el clasificador
-        labels: Etiquetas de dichos datos
+        data: Matriz de terminos de los mails de entrenamiento 
+        segun el modelo de bolsa de palabras o bigramas.
+        labels: Etiquetas de los mails de entrenamiento
 """
-def kfold_cross_validation(learner, k, examples, n, data, labels):
+def kfold_cross_validation(learner, k, n, data, labels):
     best_size = 0
-    best_validation_error = 0
+    best_validation_error = 9999
     training_error = 0
     validation_error = 0
 
-
-    for size in range(1, n  + 1): # Para los distintos valores de los hiperparámetros
-        # Kfold.split() devuelve unos indices de  entrenamiento y test
+    for size in range(1, n + 1): # Para los distintos valores de los hiperparámetros
         for train_index, test_index in KFold(k).split(data):
 
             # Se organizan los datos segun los indices
@@ -170,22 +157,67 @@ def kfold_cross_validation(learner, k, examples, n, data, labels):
             # Se entrena el clasificador con los datos y las etiquetas
             dist.fit(data_training, labels_training)
 
-            # Se realiza una clasificacion para los datos de test
-            prediction = dist.predict(data_test) # Devuelve una serie de
-            # etiquetas predecidas para los datos de test
+            # Se calcula y suma el error de los datos de entrenamiento
+            # y validacion
+            training_error += (1 - dist.score(data_training, labels_training))
+            validation_error += (1 - dist.score(data_test, labels_test))
+
+        training_error = training_error / k
+        validation_error = validation_error / k
+        if validation_error < best_validation_error:
+            best_size = size
+            best_validation_error = validation_error
+    print("Best size: " + str(best_size))
+    print("Best validation_error: " + str(best_validation_error))
+    return best_size
+
+"""
+    Crea un clasificador con el valor del hiperparametro y evalua las
+    prestaciones utilizando varias metricas. En concreto la curva de
+    precision-recall, la matriz f1-score y la matriz de confusion.
+        alpha: Valor del hiperparametro de la distribucion
+        data: Tupla de dos elementos que contiene el modelo de bolsa de palabras
+        o bigramas de los mails de entrenamiento y los mails de entrenamiento
+        respectivamente
+        labels: Etiquetas de los mails de entrenamiento
+        data_test: Mails de test
+        labels_test: Etiquetas de los datos de test
+        type: Tipo de clasificador
+"""
+def evaluation(alpha, data, labels, data_test, labels_test, type):
+    if type == "Multinomial":
+
+        # Se crea el clasificador con el alpha calculado y se entrena con la
+        # matriz de terminos del documento
+        classifier = MultinomialNB(alpha)
+        classifier.fit(data[0].transform(data[1]), labels)
 
 
-            # Se calcula la precision con la funcion score
-            # score = dist.score(data_test, labels_test)
+        # Se crea la matriz de terminos del documento basandose en el
+        # vocabulario de los datos de entrenamiento
+        test_matrix = data[0].transform(data_test)
 
+        # Se predicen los resultados con los datos de test
+        print("datos de test: " + str(test_matrix))
+        predictions = classifier.predict(test_matrix)
 
+        # Se imprimen por pantalla la curva precision-recall,
+        # f1-score y la matriz de confusion
+        metrics.precision_recall_curve(labels_test, predictions)
+    elif type == "Bernoulli":
+        # Se crea el clasificador con el alpha calculado y se entrena
+        classifier = BernoulliNB(alpha)
+        classifier.fit(data, labels)
 
-    training_error = training_error / k
-    validation_error = validation_error / k
+        # Se predicen los resultados con los datos de test
+        predictions = classifier.predict(data_test)
 
-# return Learner(best_size, examples)
-
-
+        # Se imprimen por pantalla la curva precision-recall,
+        # f1-score y la matriz de confusion
+        metrics.precision_recall_curve(labels_test, predictions)
+    else:
+        print("ERROR \n La distribucion no se corresponde con ninguna"
+              "de las aceptadas")
 
 ######################################################
 # Main
@@ -228,16 +260,23 @@ validation_labels = data1['validation_labels']+data2['validation_labels'] + \
                     data3['validation_labels']+data4['validation_labels'] + \
                     data5['validation_labels']
 
-unigram_bag = bag_words(training_mails + validation_mails, True)
-bigram_bag = bag_words(training_mails + validation_mails, False)
-
 
 # Se entrena el clasificador
-kfold_cross_validation("Multinomial", 5, "pedo", 1, unigram_bag, training_labels
-                     + validation_labels)
-
+alpha = kfold_cross_validation("Multinomial", 5, 1,
+                               CountVectorizer(ngram_range=(1, 1))
+                               .fit_transform(training_mails + validation_mails),
+                               training_labels + validation_labels)
 
 # Loading test data
 data6 = load_enron_folder(folder_enron6)
 test_mails = data6['test_mails']
 test_labels = data6['test_labels']
+
+
+# Se hace la evaluacion del clasificador
+evaluation(alpha,
+           (CountVectorizer(ngram_range=(1, 1))
+           .fit(training_mails + validation_mails),
+            training_mails + validation_mails),
+           training_labels + validation_labels,
+             test_mails, test_labels, "Multinomial")
