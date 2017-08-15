@@ -1,3 +1,9 @@
+"""
+Author: Daniel Rueda Macias, 559207@unizar.es
+Subject: Artificial Intelligence (AI) Zaragoza's University
+12th September 2017
+"""
+
 # Javier Civera, jcivera@unizar.es
 # December 2015
 # Example of loading enron spam dataset
@@ -115,23 +121,25 @@ def load_enron_folder(path):
 
    return data
 
-"""
-    Realiza el entrenamiento del clasificador mediante el algoritmo de
-    validación cruzada.
-        learner: La distribucion que se quiere usar: Multinomial o Bernoulli
-        k: Numero de folds para el entrenamiento del clasificador
-        n: Numero de hiperparametros de la distribucion
-        data: Matriz de terminos de los mails de entrenamiento 
-        segun el modelo de bolsa de palabras o bigramas.
-        labels: Etiquetas de los mails de entrenamiento
-"""
 def kfold_cross_validation(learner, k, n, data, labels):
+    """Realiza el entrenamiento del clasificador mediante el algoritmo de
+        validación cruzada.
+            learner: La distribucion que se quiere usar: Multinomial o Bernoulli
+            k: Numero de folds para el entrenamiento del clasificador
+            n: Numero de hiperparametros de la distribucion
+            data: Matriz de terminos de los mails de entrenamiento
+            segun el modelo de bolsa de palabras o bigramas.
+            labels: Etiquetas de los mails de entrenamiento
+        Devuelve el valor del suavizado de Laplace que consigue un clasificador
+        mas preciso.
+    """
+
     best_size = 0
     best_validation_error = 9999
     training_error = 0
     validation_error = 0
 
-    for size in range(1, n + 1): # Para los distintos valores de los hiperparámetros
+    for size in range(1, n + 1):  # Para los distintos valores de los hiperparámetros
         for train_index, test_index in KFold(k).split(data):
 
             # Se organizan los datos segun los indices
@@ -171,53 +179,79 @@ def kfold_cross_validation(learner, k, n, data, labels):
     print("Best validation_error: " + str(best_validation_error))
     return best_size
 
-"""
-    Crea un clasificador con el valor del hiperparametro y evalua las
-    prestaciones utilizando varias metricas. En concreto la curva de
-    precision-recall, la matriz f1-score y la matriz de confusion.
-        alpha: Valor del hiperparametro de la distribucion
-        data: Tupla de dos elementos que contiene el modelo de bolsa de palabras
-        o bigramas de los mails de entrenamiento y los mails de entrenamiento
-        respectivamente
-        labels: Etiquetas de los mails de entrenamiento
-        data_test: Mails de test
-        labels_test: Etiquetas de los datos de test
-        type: Tipo de clasificador
-"""
 def evaluation(alpha, data, labels, data_test, labels_test, type):
+    """Crea un clasificador con el valor del hiperparametro y evalua las
+        prestaciones utilizando varias metricas. En concreto la curva de
+        precision-recall, la matriz f1-score y la matriz de confusion.
+            alpha: Valor del hiperparametro de la distribucion
+            data: Tupla de dos elementos que contiene el modelo de bolsa de palabras
+            o bigramas de los mails de entrenamiento y los mails de entrenamiento
+            respectivamente
+            labels: Etiquetas de los mails de entrenamiento
+            data_test: Mails de test
+            labels_test: Etiquetas de los datos de test
+            type: Tipo de clasificador
+    """
+
     if type == "Multinomial":
 
         # Se crea el clasificador con el alpha calculado y se entrena con la
         # matriz de terminos del documento
         classifier = MultinomialNB(alpha)
-        classifier.fit(data[0].transform(data[1]), labels)
-
-
-        # Se crea la matriz de terminos del documento basandose en el
-        # vocabulario de los datos de entrenamiento
-        test_matrix = data[0].transform(data_test)
-
-        # Se predicen los resultados con los datos de test
-        print("datos de test: " + str(test_matrix))
-        predictions = classifier.predict(test_matrix)
-
-        # Se imprimen por pantalla la curva precision-recall,
-        # f1-score y la matriz de confusion
-        metrics.precision_recall_curve(labels_test, predictions)
     elif type == "Bernoulli":
-        # Se crea el clasificador con el alpha calculado y se entrena
+        # Se crea el clasificador con el alpha calculado y se entrena con la
+        # matriz de terminos del documento
         classifier = BernoulliNB(alpha)
-        classifier.fit(data, labels)
-
-        # Se predicen los resultados con los datos de test
-        predictions = classifier.predict(data_test)
-
-        # Se imprimen por pantalla la curva precision-recall,
-        # f1-score y la matriz de confusion
-        metrics.precision_recall_curve(labels_test, predictions)
     else:
         print("ERROR \n La distribucion no se corresponde con ninguna"
               "de las aceptadas")
+
+    classifier.fit(data[0].transform(data[1]), labels)
+
+    # Se crea la matriz de terminos del documento basandose en el
+    # vocabulario de los datos de entrenamiento
+    test_matrix = data[0].transform(data_test)
+
+    # Se predicen los resultados con los datos de test
+    predictions = classifier.predict(test_matrix)
+
+    # Se imprimen por pantalla la curva precision-recall,
+    # f1-score y la matriz de confusion
+    # Curva precision recall
+    precisionRecall_curve(labels_test, predictions)
+
+    # Matriz de confusion
+    confusion_matrix(labels_test, predictions)
+
+    # f1-score
+    print("F1-score: " + str(metrics.f1_score(labels_test, predictions)))
+
+def precisionRecall_curve(test_labels, predictions):
+    """Muestra por pantalla la curva Precision-Recall.
+            test_labels: etiquetas a testear
+            predictions: etiquetas predecidas por el clasificador
+    """
+
+    precision, recall, thresholds = metrics.precision_recall_curve(test_labels,
+                                                                   predictions)
+    plt.clf()
+    plt.title("Precision-Recall curve")
+    plt.xlabel("Precision")
+    plt.ylabel("Recall")
+    plt.plot(precision, recall)
+    plt.show()
+
+def confusion_matrix(test_labels, predictions):
+    """Muestra por pantalla la matriz de confusion.
+            test_labels: etiquetas a testear
+            predictions: etiquetas predecidas por el clasificador
+    """
+
+    confusion_matrix = metrics.confusion_matrix(test_labels, predictions)
+    print("Confusion matrix")
+    print("      spam     ham")
+    print("spam  %d      %d" % (confusion_matrix[0][0], confusion_matrix[0][1]))
+    print(" ham  %d      %d" % (confusion_matrix[1][0], confusion_matrix[1][1]))
 
 ######################################################
 # Main
