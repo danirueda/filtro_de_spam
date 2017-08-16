@@ -124,13 +124,13 @@ def load_enron_folder(path):
 def kfold_cross_validation(learner, k, n, data, labels):
     """Realiza el entrenamiento del clasificador mediante el algoritmo de
         validación cruzada.
-            learner: La distribucion que se quiere usar: Multinomial o Bernoulli
-            k: Numero de folds para el entrenamiento del clasificador
-            n: Numero de hiperparametros de la distribucion
-            data: Matriz de terminos de los mails de entrenamiento
+    :param learner: La distribucion que se quiere usar: Multinomial o Bernoulli
+    :param k: Numero de folds para el entrenamiento del clasificador
+    :param n: Numero de hiperparametros de la distribucion
+    :param data: Matriz de terminos de los mails de entrenamiento
             segun el modelo de bolsa de palabras o bigramas.
-            labels: Etiquetas de los mails de entrenamiento
-        Devuelve el valor del suavizado de Laplace que consigue un clasificador
+    :param labels: Etiquetas de los mails de entrenamiento
+    :return: Valor del suavizado de Laplace que consigue un clasificador
         mas preciso.
     """
 
@@ -179,18 +179,27 @@ def kfold_cross_validation(learner, k, n, data, labels):
     print("Best validation_error: " + str(best_validation_error))
     return best_size
 
-def evaluation(alpha, data, labels, data_test, labels_test, type):
+
+def evaluation(alpha, data, labels, data_test, labels_test, type, normalized, transformer=None):
     """Crea un clasificador con el valor del hiperparametro y evalua las
         prestaciones utilizando varias metricas. En concreto la curva de
-        precision-recall, la matriz f1-score y la matriz de confusion.
-            alpha: Valor del hiperparametro de la distribucion
-            data: Tupla de dos elementos que contiene el modelo de bolsa de palabras
-            o bigramas de los mails de entrenamiento y los mails de entrenamiento
-            respectivamente
-            labels: Etiquetas de los mails de entrenamiento
-            data_test: Mails de test
-            labels_test: Etiquetas de los datos de test
-            type: Tipo de clasificador
+        precision-recall, la matriz f1-score y la matriz de confusion. Para
+        evaluar la distribucion normalizada es necesario llamar a la funcion
+        con el parametro normalized establecido a True.
+    :param alpha: Valor del hiperparametro de la distribucion
+    :param data: Tupla de dos elementos:
+                data[0]: Modelo de bolsa de palabras o bigramas de los mails de
+                entrenamiento previamente con el lenguaje aprendido (fit())
+                data[1]: Mails de entrenamiento
+    :param labels: Etiquetas de los mails de entrenamiento
+    :param data_test: Mails de test
+    :param labels_test: Etiquetas de los mails de test
+    :param type: Tipo de clasificador
+    :param normalized: Indica si la bolsa de palabras esta normalizada (True) o
+            no (False)
+    :param transformer: Objeto para convertir la matriz de terminos a una
+            distribucion normalizada. None por defecto
+    :return:
     """
 
     if type == "Multinomial":
@@ -199,6 +208,7 @@ def evaluation(alpha, data, labels, data_test, labels_test, type):
         # matriz de terminos del documento
         classifier = MultinomialNB(alpha)
     elif type == "Bernoulli":
+
         # Se crea el clasificador con el alpha calculado y se entrena con la
         # matriz de terminos del documento
         classifier = BernoulliNB(alpha)
@@ -206,14 +216,30 @@ def evaluation(alpha, data, labels, data_test, labels_test, type):
         print("ERROR \n La distribucion no se corresponde con ninguna"
               "de las aceptadas")
 
-    classifier.fit(data[0].transform(data[1]), labels)
+    if normalized:
+        # Se entrena el clasificador con la matriz de terminos del vocabulario
+        classifier.fit(transformer.transform(data[0].transform(data[1])), labels)
 
-    # Se crea la matriz de terminos del documento basandose en el
-    # vocabulario de los datos de entrenamiento
-    test_matrix = data[0].transform(data_test)
+        # Se crea la matriz de terminos del documento basandose en el
+        # vocabulario de los datos de entrenamiento
+        test_matrix = transformer.transform(data[0].transform(data_test))
+    else:
+        # Se entrena el clasificador con la matriz de terminos del vocabulario
+        classifier.fit(data[0].transform(data[1]), labels)
+
+        # Se crea la matriz de terminos del documento basandose en el
+        # vocabulario de los datos de entrenamiento
+        test_matrix = data[0].transform(data_test)
 
     # Se predicen los resultados con los datos de test
     predictions = classifier.predict(test_matrix)
+
+    # Se predicen la probabilidad de pertenecer a cada clase con
+    # los datos de test
+    probabilities = classifier.predict_proba(test_matrix)
+    print()
+    print("--- Probabilidades ---")
+    print(probabilities)
 
     # Se imprimen por pantalla la curva precision-recall,
     # f1-score y la matriz de confusion
@@ -224,12 +250,14 @@ def evaluation(alpha, data, labels, data_test, labels_test, type):
     confusion_matrix(labels_test, predictions)
 
     # f1-score
+    print()
     print("F1-score: " + str(metrics.f1_score(labels_test, predictions)))
 
 def precisionRecall_curve(test_labels, predictions):
     """Muestra por pantalla la curva Precision-Recall.
-            test_labels: etiquetas a testear
-            predictions: etiquetas predecidas por el clasificador
+    :param test_labels: Etiquetas a testear
+    :param predictions: Etiquetas predecidas por el clasificador
+    :return:
     """
 
     precision, recall, thresholds = metrics.precision_recall_curve(test_labels,
@@ -243,35 +271,98 @@ def precisionRecall_curve(test_labels, predictions):
 
 def confusion_matrix(test_labels, predictions):
     """Muestra por pantalla la matriz de confusion.
-            test_labels: etiquetas a testear
-            predictions: etiquetas predecidas por el clasificador
+    :param test_labels: etiquetas a testear
+    :param predictions: etiquetas predecidas por el clasificador
+    :return:
     """
 
     confusion_matrix = metrics.confusion_matrix(test_labels, predictions)
+    print()
     print("Confusion matrix")
     print("      spam     ham")
     print("spam  %d      %d" % (confusion_matrix[0][0], confusion_matrix[0][1]))
     print(" ham  %d      %d" % (confusion_matrix[1][0], confusion_matrix[1][1]))
 
+def prueba(bag_of, normalized, classifier, folds, data_mails, data_lables, test_mails, test_labels):
+    """Realiza un entrenamiento y evaluacion de un clasificador eligiendo una
+    distribucion de probabilidad determinada dado un modelo de bolsa de palabras,
+    pudiendo este ser normalizado o no
+    :param bag_of: Bolsa de palabras (words) o bigramas (bigrams)
+    :param normalized: Normalizar el modelo (True) o no (False)
+    :param classifier: Tipo de distribucion para construir el clasificador
+    (Multinomial o Bernoulli)
+    :param folds: Numero de folds para ejecutar el algoritmo kfold_cross_validation
+    :param data_mails: Mails de datos
+    :param data_lables: Etiquetas de los mails de datos
+    :param test_mails: Mails de test
+    :param test_labels: Etiquetas de los mails de test
+    :return:
+    """
+    bag_type = "undefined"
+    distribution = "undefined"
+    model_bag = "indefinido"
+    if bag_of == "words":
+        model_bag = "unigramas"
+        bag_type = CountVectorizer(ngram_range=(1, 1))  # Bolsa de palabras
+    elif bag_of == "bigrams":
+        model_bag = "bigramas"
+        bag_type = CountVectorizer(ngram_range=(1, 2))  # Bolsa de bigramas
+    else:
+        print("ERROR \n Vuelva a introducir el modelo de bolsa de palabras que"
+              "desea")
+        exit(1)
+
+    if classifier == "Multinomial":
+        distribution = "Multinomial"
+    elif classifier == "Bernoulli":
+        distribution = "Bernoulli"
+    else:
+        print("ERROR \n Vuelva a introducir la dsitribucion de probabilidad con"
+              "la que quiere crear el clasificador")
+        exit(1)
+
+    if normalized:
+        print()
+        print("---------------------------------------------------------------")
+        print("                %s %s con %s               " % (distribution, "normalizada", model_bag))
+        print("---------------------------------------------------------------")
+        transformer = TfidfTransformer()
+        alpha = kfold_cross_validation(distribution, folds, 1,
+                                       transformer.fit_transform(bag_type.fit_transform(data_mails)),
+                                       data_lables)
+        evaluation(alpha, (bag_type.fit(data_mails), data_mails), data_lables,
+                   test_mails, test_labels, distribution, True, transformer)
+    else:
+        print()
+        print("---------------------------------------------------------------")
+        print("                %s %s con %s               " % (distribution, "sin normalizar", model_bag))
+        print("---------------------------------------------------------------")
+        alpha = kfold_cross_validation(distribution, folds, 1,
+                                       bag_type.fit_transform(data_mails),
+                                       data_lables)
+        evaluation(alpha, (bag_type.fit(data_mails), data_mails), data_lables,
+                   test_mails, test_labels, distribution, False)
+
+
 ######################################################
 # Main
 ######################################################
 
+# Ruta a la carpeta donde se encuentran las carpetas enron que contienen los mails
+# para hacer las pruebas.
+# Nota: De Linux a Windows las / se cambian por \
+path = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/mails/'
+
 print("Starting...")
 
 # Path to the folder containing the mails
-folder_enron1 = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/' \
-                'mails/enron1'
-folder_enron2 = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/' \
-                'mails/enron2'
-folder_enron3 = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/' \
-                'mails/enron3'
-folder_enron4 = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/' \
-                'mails/enron4'
-folder_enron5 = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/' \
-                'mails/enron5'
-folder_enron6 = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/' \
-                'mails/enron6'
+folder_enron1 = path + 'enron1'
+folder_enron2 = path + 'enron2'
+folder_enron3 = path + 'enron3'
+folder_enron4 = path + 'enron4'
+folder_enron5 = path + 'enron5'
+folder_enron6 = path + 'enron6'
+
 # Load mails
 data1 = load_enron_folder(folder_enron1)
 data2 = load_enron_folder(folder_enron2)
@@ -294,23 +385,48 @@ validation_labels = data1['validation_labels']+data2['validation_labels'] + \
                     data3['validation_labels']+data4['validation_labels'] + \
                     data5['validation_labels']
 
-
-# Se entrena el clasificador
-alpha = kfold_cross_validation("Multinomial", 5, 1,
-                               CountVectorizer(ngram_range=(1, 1))
-                               .fit_transform(training_mails + validation_mails),
-                               training_labels + validation_labels)
-
 # Loading test data
 data6 = load_enron_folder(folder_enron6)
 test_mails = data6['test_mails']
 test_labels = data6['test_labels']
 
 
-# Se hace la evaluacion del clasificador
-evaluation(alpha,
-           (CountVectorizer(ngram_range=(1, 1))
-           .fit(training_mails + validation_mails),
-            training_mails + validation_mails),
-           training_labels + validation_labels,
-             test_mails, test_labels, "Multinomial")
+################################################################################
+# BATERIA DE PRUEBAS
+################################################################################
+
+folds = 5 # Para ir proband a ver cuantos folds son mejore
+
+# Multinomial unigramas
+prueba("words", False, "Multinomial", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+# Multinomial bigramas
+prueba("bigrams", False, "Multinomial", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+# Multinomial normalizada unigramas
+prueba("words", True, "Multinomial", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+# Multinomial normalizada bigramas
+prueba("bigrams", True, "Multinomial", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+# Bernoulli unigramas
+prueba("words", False, "Bernoulli", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+# Bernoulli bigramas
+prueba("bigrams", False, "Bernoulli", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+# Bernoulli normalizada unigramas
+prueba("words", True, "Bernoulli", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+# Bernoulli normalizada bigramas
+prueba("bigrams", True, "Bernoulli", folds, training_mails + validation_mails,
+       training_labels + validation_labels, test_mails, test_labels)
+
+
