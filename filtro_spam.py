@@ -405,7 +405,7 @@ else:
     # BATERIA DE PRUEBAS
     ################################################################################
 
-    folds = 5 # Para ir proband a ver cuantos folds son mejore
+    folds = 5  # Para ir proband a ver cuantos folds son mejores
 
     # Multinomial unigramas
     prueba("words", False, "Multinomial", folds, training_mails + validation_mails,
