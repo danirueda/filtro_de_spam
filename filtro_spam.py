@@ -397,36 +397,38 @@ test_labels = data6['test_labels']
 
 folds = 5 # Para ir proband a ver cuantos folds son mejore
 
+print(training_mails[0])
+print(training_labels[0])
 # Multinomial unigramas
-prueba("words", False, "Multinomial", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("words", False, "Multinomial", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 # Multinomial bigramas
-prueba("bigrams", False, "Multinomial", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("bigrams", False, "Multinomial", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 # Multinomial normalizada unigramas
-prueba("words", True, "Multinomial", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("words", True, "Multinomial", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 # Multinomial normalizada bigramas
-prueba("bigrams", True, "Multinomial", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("bigrams", True, "Multinomial", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 # Bernoulli unigramas
-prueba("words", False, "Bernoulli", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("words", False, "Bernoulli", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 # Bernoulli bigramas
-prueba("bigrams", False, "Bernoulli", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("bigrams", False, "Bernoulli", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 # Bernoulli normalizada unigramas
-prueba("words", True, "Bernoulli", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("words", True, "Bernoulli", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 # Bernoulli normalizada bigramas
-prueba("bigrams", True, "Bernoulli", folds, training_mails + validation_mails,
-       training_labels + validation_labels, test_mails, test_labels)
+#prueba("bigrams", True, "Bernoulli", folds, training_mails + validation_mails,
+#       training_labels + validation_labels, test_mails, test_labels)
 
 
