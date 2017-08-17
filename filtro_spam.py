@@ -18,6 +18,7 @@ Subject: Artificial Intelligence (AI) Zaragoza's University
 ######################################################
 
 import matplotlib.pyplot as plt
+import sys
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
@@ -139,44 +140,48 @@ def kfold_cross_validation(learner, k, n, data, labels):
     training_error = 0
     validation_error = 0
 
-    for size in range(1, n + 1):  # Para los distintos valores de los hiperparámetros
-        for train_index, test_index in KFold(k).split(data):
+    if k < 2:
+        print("ERROR \nk tiene que ser >= 2")
+        exit(1)
+    else:
+        for size in range(1, n + 1):  # Para los distintos valores de los hiperparámetros
+            for train_index, test_index in KFold(k).split(data):
 
-            # Se organizan los datos segun los indices
+                # Se organizan los datos segun los indices
 
-            data_training = data[train_index[0]:train_index[-1]]
-            labels_training = labels[train_index[0]:train_index[-1]]
+                data_training = data[train_index[0]:train_index[-1]]
+                labels_training = labels[train_index[0]:train_index[-1]]
 
-            # Para test
-            data_test = data[test_index[0]:test_index[-1]]
-            labels_test = labels[test_index[0]:test_index[-1]]
+                # Para test
+                data_test = data[test_index[0]:test_index[-1]]
+                labels_test = labels[test_index[0]:test_index[-1]]
 
-            # Se prepara la distribucion que se haya especificado
+                # Se prepara la distribucion que se haya especificado
 
-            if learner == "Multinomial":
-                dist = MultinomialNB(size)
-            elif learner == "Bernoulli":
-                dist = BernoulliNB(size)
-            else:
-                print("ERROR")
-                raise NameError("ERROR \n La distribución no coincide con "
-                                "ninguna de las esperadas")
+                if learner == "Multinomial":
+                    dist = MultinomialNB(size)
+                elif learner == "Bernoulli":
+                    dist = BernoulliNB(size)
+                else:
+                    print("ERROR \nLa distribución no coincide con "
+                                    "ninguna de las esperadas")
+                    exit(1)
 
-            # Se entrena el clasificador con los datos y las etiquetas
-            dist.fit(data_training, labels_training)
+                # Se entrena el clasificador con los datos y las etiquetas
+                dist.fit(data_training, labels_training)
 
-            # Se calcula y suma el error de los datos de entrenamiento
-            # y validacion
-            training_error += (1 - dist.score(data_training, labels_training))
-            validation_error += (1 - dist.score(data_test, labels_test))
+                # Se calcula y suma el error de los datos de entrenamiento
+                # y validacion
+                training_error += (1 - dist.score(data_training, labels_training))
+                validation_error += (1 - dist.score(data_test, labels_test))
 
-        training_error = training_error / k
-        validation_error = validation_error / k
-        if validation_error < best_validation_error:
-            best_size = size
-            best_validation_error = validation_error
-    print("Best size: " + str(best_size))
-    print("Best validation_error: " + str(best_validation_error))
+            training_error = training_error / k
+            validation_error = validation_error / k
+            if validation_error < best_validation_error:
+                best_size = size
+                best_validation_error = validation_error
+        print("Best size: " + str(best_size))
+        print("Best validation_error: " + str(best_validation_error))
     return best_size
 
 
@@ -213,8 +218,9 @@ def evaluation(alpha, data, labels, data_test, labels_test, type, normalized, tr
         # matriz de terminos del documento
         classifier = BernoulliNB(alpha)
     else:
-        print("ERROR \n La distribucion no se corresponde con ninguna"
+        print("ERROR \nLa distribucion no se corresponde con ninguna"
               "de las aceptadas")
+        exit(1)
 
     if normalized:
         # Se entrena el clasificador con la matriz de terminos del vocabulario
@@ -308,7 +314,7 @@ def prueba(bag_of, normalized, classifier, folds, data_mails, data_lables, test_
         model_bag = "bigramas"
         bag_type = CountVectorizer(ngram_range=(1, 2))  # Bolsa de bigramas
     else:
-        print("ERROR \n Vuelva a introducir el modelo de bolsa de palabras que"
+        print("ERROR \nVuelva a introducir el modelo de bolsa de palabras que"
               "desea")
         exit(1)
 
@@ -317,7 +323,7 @@ def prueba(bag_of, normalized, classifier, folds, data_mails, data_lables, test_
     elif classifier == "Bernoulli":
         distribution = "Bernoulli"
     else:
-        print("ERROR \n Vuelva a introducir la dsitribucion de probabilidad con"
+        print("ERROR \nVuelva a introducir la dsitribucion de probabilidad con"
               "la que quiere crear el clasificador")
         exit(1)
 
@@ -351,84 +357,86 @@ def prueba(bag_of, normalized, classifier, folds, data_mails, data_lables, test_
 # Ruta a la carpeta donde se encuentran las carpetas enron que contienen los mails
 # para hacer las pruebas.
 # Nota: De Linux a Windows las / se cambian por \
-path = '/home/dani/Escritorio/Unizar/IA/TP6s/TP6_filtro_de_spam/mails/'
 
-print("Starting...")
+if len(sys.argv) == 1:
+    print("ERROR \nIntroduzca la ruta a los mails Enron")
+    exit(1)
+else:
+    path = sys.argv[1]
+    print("Starting...")
 
-# Path to the folder containing the mails
-folder_enron1 = path + 'enron1'
-folder_enron2 = path + 'enron2'
-folder_enron3 = path + 'enron3'
-folder_enron4 = path + 'enron4'
-folder_enron5 = path + 'enron5'
-folder_enron6 = path + 'enron6'
+    # Path to the folder containing the mails
+    folder_enron1 = path + 'enron1'
+    folder_enron2 = path + 'enron2'
+    folder_enron3 = path + 'enron3'
+    folder_enron4 = path + 'enron4'
+    folder_enron5 = path + 'enron5'
+    folder_enron6 = path + 'enron6'
 
-# Load mails
-data1 = load_enron_folder(folder_enron1)
-data2 = load_enron_folder(folder_enron2)
-data3 = load_enron_folder(folder_enron3)
-data4 = load_enron_folder(folder_enron4)
-data5 = load_enron_folder(folder_enron5)
-
-
-# Prepare data
-training_mails = data1['training_mails']+data2['training_mails'] + \
-                 data3['training_mails']+data4['training_mails'] + \
-                 data5['training_mails']
-training_labels = data1['training_labels']+data2['training_labels'] + \
-                  data3['training_labels']+data4['training_labels'] + \
-                  data5['training_labels']
-validation_mails = data1['validation_mails']+data2['validation_mails'] + \
-                   data3['validation_mails']+data4['validation_mails'] + \
-                   data5['validation_mails']
-validation_labels = data1['validation_labels']+data2['validation_labels'] + \
-                    data3['validation_labels']+data4['validation_labels'] + \
-                    data5['validation_labels']
-
-# Loading test data
-data6 = load_enron_folder(folder_enron6)
-test_mails = data6['test_mails']
-test_labels = data6['test_labels']
+    # Load mails
+    data1 = load_enron_folder(folder_enron1)
+    data2 = load_enron_folder(folder_enron2)
+    data3 = load_enron_folder(folder_enron3)
+    data4 = load_enron_folder(folder_enron4)
+    data5 = load_enron_folder(folder_enron5)
 
 
-################################################################################
-# BATERIA DE PRUEBAS
-################################################################################
+    # Prepare data
+    training_mails = data1['training_mails']+data2['training_mails'] + \
+                     data3['training_mails']+data4['training_mails'] + \
+                     data5['training_mails']
+    training_labels = data1['training_labels']+data2['training_labels'] + \
+                      data3['training_labels']+data4['training_labels'] + \
+                      data5['training_labels']
+    validation_mails = data1['validation_mails']+data2['validation_mails'] + \
+                       data3['validation_mails']+data4['validation_mails'] + \
+                       data5['validation_mails']
+    validation_labels = data1['validation_labels']+data2['validation_labels'] + \
+                        data3['validation_labels']+data4['validation_labels'] + \
+                        data5['validation_labels']
 
-folds = 5 # Para ir proband a ver cuantos folds son mejore
+    # Loading test data
+    data6 = load_enron_folder(folder_enron6)
+    test_mails = data6['test_mails']
+    test_labels = data6['test_labels']
 
-print(training_mails[0])
-print(training_labels[0])
-# Multinomial unigramas
-#prueba("words", False, "Multinomial", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
 
-# Multinomial bigramas
-#prueba("bigrams", False, "Multinomial", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
+    ################################################################################
+    # BATERIA DE PRUEBAS
+    ################################################################################
 
-# Multinomial normalizada unigramas
-#prueba("words", True, "Multinomial", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
+    folds = 5 # Para ir proband a ver cuantos folds son mejore
 
-# Multinomial normalizada bigramas
-#prueba("bigrams", True, "Multinomial", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
+    # Multinomial unigramas
+    prueba("words", False, "Multinomial", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
-# Bernoulli unigramas
-#prueba("words", False, "Bernoulli", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
+    # Multinomial bigramas
+    prueba("bigrams", False, "Multinomial", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
-# Bernoulli bigramas
-#prueba("bigrams", False, "Bernoulli", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
+    # Multinomial normalizada unigramas
+    prueba("words", True, "Multinomial", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
-# Bernoulli normalizada unigramas
-#prueba("words", True, "Bernoulli", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
+    # Multinomial normalizada bigramas
+    prueba("bigrams", True, "Multinomial", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
-# Bernoulli normalizada bigramas
-#prueba("bigrams", True, "Bernoulli", folds, training_mails + validation_mails,
-#       training_labels + validation_labels, test_mails, test_labels)
+    # Bernoulli unigramas
+    prueba("words", False, "Bernoulli", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
+
+    # Bernoulli bigramas
+    prueba("bigrams", False, "Bernoulli", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
+
+    # Bernoulli normalizada unigramas
+    prueba("words", True, "Bernoulli", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
+
+    # Bernoulli normalizada bigramas
+    prueba("bigrams", True, "Bernoulli", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
 
