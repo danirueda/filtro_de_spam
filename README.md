@@ -46,13 +46,14 @@ Es necesario tener instalada la distribución de Python Anaconda y el paquete de
 aprendizaje automático Scikit-Learn mencionado anteriormente.
 
 Para lanzar el programa, simplemente hay que ubicarse en el directorio donde se
-encuentre el fichero `filtro_spam.py` e introucir como único parámetro la ruta
-donde se encuentran las carpetas de los mails Enron (con '/' al final).
+encuentre el fichero `filtro_spam.py` e introucir como parámetros la ruta
+donde se encuentran las carpetas de los mails Enron (con '/' al final) y el número de
+folds con el que se quiere ejecutar el algortimo de entrenamiento K-fold cross-validation.
 
 ```
-$ python filtro_spam.py /ruta/hasta/mails/enron/
+$ python filtro_spam.py /ruta/hasta/mails/enron/ numero_de_folds
 ```
 
 **Nota:** Dependiendo del sistema operativo, los separadores de directorio cambian
 de /  a \ y viceversa. Por ello igual es necesario cambiar al separador correspondiente
-en las líneas 41 y 76 de la función `load_enron_folder(path)` del fichero `filtro_spam.py`.
+en las líneas 42 y 77 de la función `load_enron_folder(path)` del fichero `filtro_spam.py`.

@@ -358,8 +358,8 @@ def prueba(bag_of, normalized, classifier, folds, data_mails, data_lables, test_
 # para hacer las pruebas.
 # Nota: De Linux a Windows las / se cambian por \
 
-if len(sys.argv) == 1:
-    print("ERROR \nIntroduzca la ruta a los mails Enron")
+if len(sys.argv) < 3:
+    print("ERROR \nIntroduzca la ruta a los mails Enron y el número de folds")
     exit(1)
 else:
     path = sys.argv[1]
@@ -405,7 +405,7 @@ else:
     # BATERIA DE PRUEBAS
     ################################################################################
 
-    folds = 5  # Para ir proband a ver cuantos folds son mejores
+    folds = int(sys.argv[2])  # Para ir probando a ver cuantos folds son mejores
 
     # Multinomial unigramas
     prueba("words", False, "Multinomial", folds, training_mails + validation_mails,
