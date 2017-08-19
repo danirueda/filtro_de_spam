@@ -252,9 +252,10 @@ def evaluation(alpha, data, labels, data_test, labels_test, type, normalized, tr
     predictions = classifier.predict(test_matrix)
 
     # Se encuentra el primer mail que haya clasificado mal
-    found = False
+    falso_ham = False
+    falso_spam = False
     i = 0
-    while (not found) and (i <= len(labels_test)):
+    while (not falso_ham) or (not falso_spam) and (i <= len(labels_test)):
         if predictions[i] != labels_test[i]:
             print()
             print("Se ha predecido como " + binary_traduction(predictions[i])
@@ -262,9 +263,11 @@ def evaluation(alpha, data, labels, data_test, labels_test, type, normalized, tr
             print()
             print("------ Mail ------")
             print(data_test[i])
-            found = True
-        else:
-            i += 1
+            if (predictions[i] == 0) and (labels_test[i] == 1):
+                falso_spam = True
+            else:
+                falso_ham = True
+        i += 1
 
     # Se predicen la probabilidad de pertenecer a cada clase con
     # los datos de test
