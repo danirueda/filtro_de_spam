@@ -190,6 +190,7 @@ def binary_traduction(label):
     :param label: Etiqueta binaria
     :return: Palabra que corresponde a la etiqueta binaria
     """
+
     if label == 0:
         return "Spam"
     else:
@@ -267,7 +268,7 @@ def evaluation(alpha, data, labels, data_test, labels_test, type, normalized, tr
 
     # Se predicen la probabilidad de pertenecer a cada clase con
     # los datos de test
-    probabilities = classifier.predict_proba(test_matrix)
+    # probabilities = classifier.predict_proba(test_matrix)
     # print()
     # print("--- Probabilidades ---")
     # print(probabilities)
@@ -364,10 +365,19 @@ def prueba(bag_of, normalized, classifier, folds, data_mails, data_lables, test_
         evaluation(alpha, (bag_type.fit(data_mails), data_mails), data_lables,
                    test_mails, test_labels, distribution, True, transformer)
     else:
-        print()
-        print("---------------------------------------------------------------")
-        print("                %s %s con %s               " % (distribution, "sin normalizar", model_bag))
-        print("---------------------------------------------------------------")
+        if distribution == "Bernoulli":
+            print()
+            print(
+                "---------------------------------------------------------------")
+            print("                %s %s con %s               " % (
+            distribution, "", model_bag))
+            print(
+                "---------------------------------------------------------------")
+        else:
+            print()
+            print("---------------------------------------------------------------")
+            print("                %s %s con %s               " % (distribution, "sin normalizar", model_bag))
+            print("---------------------------------------------------------------")
         alpha = kfold_cross_validation(distribution, folds, 1,
                                        bag_type.fit_transform(data_mails),
                                        data_lables)
@@ -425,7 +435,6 @@ else:
     test_mails = data6['test_mails']
     test_labels = data6['test_labels']
 
-
     ################################################################################
     # BATERIA DE PRUEBAS
     ################################################################################
@@ -437,31 +446,23 @@ else:
            training_labels + validation_labels, test_mails, test_labels)
 
     # Multinomial bigramas
-    #prueba("bigrams", False, "Multinomial", folds, training_mails + validation_mails,
-    #       training_labels + validation_labels, test_mails, test_labels)
+    prueba("bigrams", False, "Multinomial", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
     # Multinomial normalizada unigramas
-    #prueba("words", True, "Multinomial", folds, training_mails + validation_mails,
-    #       training_labels + validation_labels, test_mails, test_labels)
+    prueba("words", True, "Multinomial", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
     # Multinomial normalizada bigramas
-    #prueba("bigrams", True, "Multinomial", folds, training_mails + validation_mails,
-    #       training_labels + validation_labels, test_mails, test_labels)
+    prueba("bigrams", True, "Multinomial", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
     # Bernoulli unigramas
-    #prueba("words", False, "Bernoulli", folds, training_mails + validation_mails,
-    #       training_labels + validation_labels, test_mails, test_labels)
+    prueba("words", False, "Bernoulli", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
     # Bernoulli bigramas
-    #prueba("bigrams", False, "Bernoulli", folds, training_mails + validation_mails,
-    #       training_labels + validation_labels, test_mails, test_labels)
-
-    # Bernoulli normalizada unigramas
-    #prueba("words", True, "Bernoulli", folds, training_mails + validation_mails,
-    #       training_labels + validation_labels, test_mails, test_labels)
-
-    # Bernoulli normalizada bigramas
-    #prueba("bigrams", True, "Bernoulli", folds, training_mails + validation_mails,
-    #       training_labels + validation_labels, test_mails, test_labels)
+    prueba("bigrams", False, "Bernoulli", folds, training_mails + validation_mails,
+           training_labels + validation_labels, test_mails, test_labels)
 
 

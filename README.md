@@ -31,8 +31,6 @@ modelo de bolsa de palabras (unigramas o bigramas). De una forma mas detallada:
 * Multinomial normalizada con bigramas.
 * Bernoulli con unigramas.
 * Bernoulli con bigramas.
-* Bernoulli normalizada con unigramas.
-* Bernoulli normalizada con bigramas.
 
 ## Información del repositorio
 El fichero `filtro_spam.py` contiene el código Pyhton para hacer el entrenamiento
