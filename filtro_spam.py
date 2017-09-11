@@ -124,7 +124,7 @@ def load_enron_folder(path):
 
 def kfold_cross_validation(learner, k, n, data, labels):
     """Realiza el entrenamiento del clasificador mediante el algoritmo de
-        validación cruzada.
+        validacion cruzada.
     :param learner: La distribucion que se quiere usar: Multinomial o Bernoulli
     :param k: Numero de folds para el entrenamiento del clasificador
     :param n: Numero de hiperparametros de la distribucion
@@ -144,7 +144,7 @@ def kfold_cross_validation(learner, k, n, data, labels):
         print("ERROR \nk tiene que ser >= 2")
         exit(1)
     else:
-        for size in range(1, n + 1):  # Para los distintos valores de los hiperparámetros
+        for size in range(1, n + 1):  # Para los distintos valores de los hiperparametros
             for train_index, test_index in KFold(k).split(data):
 
                 # Se organizan los datos segun los indices
@@ -163,7 +163,7 @@ def kfold_cross_validation(learner, k, n, data, labels):
                 elif learner == "Bernoulli":
                     dist = BernoulliNB(size)
                 else:
-                    print("ERROR \nLa distribución no coincide con "
+                    print("ERROR \nLa distribucion no coincide con "
                                     "ninguna de las esperadas")
                     exit(1)
 
@@ -185,7 +185,7 @@ def kfold_cross_validation(learner, k, n, data, labels):
     return best_size
 
 def binary_traduction(label):
-    """Traduce la etiqueta binaria de clasificación a la palabra que le corresponde.
+    """Traduce la etiqueta binaria de clasificacion a la palabra que le corresponde.
     0 para Spam y 1 para Ham.
     :param label: Etiqueta binaria
     :return: Palabra que corresponde a la etiqueta binaria
@@ -298,10 +298,15 @@ def precisionRecall_curve(test_labels, predictions):
     precision, recall, thresholds = metrics.precision_recall_curve(test_labels,
                                                                    predictions)
     plt.clf()
+    plt.step(recall, precision, color='b', alpha=0.2,
+              where='post')
+    plt.fill_between(recall, precision, step='post', alpha=0.2,
+                      color='b')
     plt.title("Precision-Recall curve")
-    plt.xlabel("Precision")
-    plt.ylabel("Recall")
-    plt.plot(precision, recall)
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
     plt.show()
 
 def confusion_matrix(test_labels, predictions):
@@ -397,7 +402,7 @@ def prueba(bag_of, normalized, classifier, folds, data_mails, data_lables, test_
 # Nota: De Linux a Windows las / se cambian por \
 
 if len(sys.argv) < 3:
-    print("ERROR \nIntroduzca la ruta a los mails Enron y el número de folds")
+    print("ERROR \nIntroduzca la ruta a los mails Enron y el numero de folds")
     exit(1)
 else:
     path = sys.argv[1]
