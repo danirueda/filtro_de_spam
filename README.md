@@ -55,3 +55,7 @@ $ python filtro_spam.py /ruta/hasta/mails/enron/ numero_de_folds
 **Nota:** Dependiendo del sistema operativo, los separadores de directorio cambian
 de /  a \ y viceversa. Por ello igual es necesario cambiar al separador correspondiente
 en las líneas 42 y 77 de la función `load_enron_folder(path)` del fichero `filtro_spam.py`.
+
+## Por mejorar
+- Se debe cambiar el predecir la clase a la que pertenece por predecir la probabilidad de que sea spam o ham con la función `predict_proba`, de este modo, se conseguirá una curva de precisión-recall de verdad.
+- Se deben cargar **TODOS** los mails de las carpetas enron1 a enron5 para hacer entrenamiento y no escoger solo por las etiquetas de training_mail y validation_mails. Después, hay que usar **TODOS** los mails de la carpeta enron6 para hacer los tests.
